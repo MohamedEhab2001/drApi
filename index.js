@@ -29,7 +29,7 @@ app.post('/categories', (req, res) => {
     });
   });
 
-  app.get('/categories', (req, res) => {
+app.get('/categories', (req, res) => {
     db.all('SELECT * FROM categories', (err, rows) => {
       if (err) {
         return res.status(500).json({ error: err.message });
@@ -38,7 +38,7 @@ app.post('/categories', (req, res) => {
     });
   });
 
-  app.get('/products', (req, res) => {
+app.get('/products', (req, res) => {
     db.all('SELECT * FROM products', (err, rows) => {
       if (err) {
         return res.status(500).json({ error: err.message });
@@ -47,7 +47,7 @@ app.post('/categories', (req, res) => {
     });
   });
 
-  app.get('/products/homepage', (req, res) => {
+app.get('/products/homepage', (req, res) => {
     db.all("SELECT * FROM products where homepage='true'", (err, rows) => {
       if (err) {
         return res.status(500).json({ error: err.message });
@@ -56,7 +56,7 @@ app.post('/categories', (req, res) => {
     });
   });
 
-  app.delete('/products/:id', (req, res) => {
+app.delete('/products/:id', (req, res) => {
     db.run(`DELETE FROM products where id = ${req.params.id}`, (err, rows) => {
       if (err) {
         return res.status(500).json({ error: err.message });
@@ -65,7 +65,7 @@ app.post('/categories', (req, res) => {
     });
   });
 
-  app.delete('/categories/:id', (req, res) => {
+app.delete('/categories/:id', (req, res) => {
     db.run(`DELETE FROM categories where id = ${req.params.id}`, (err, rows) => {
       if (err) {
         return res.status(500).json({ error: err.message });
@@ -109,6 +109,67 @@ app.post('/products', multer.single('image'), async (req, res) => {
     }
   );
 });
+
+// Route to get all days
+app.get('/days', (req, res) => {
+  db.all('SELECT * FROM days', (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(rows);
+  });
+});
+
+// Route to insert a new day
+app.post('/days', (req, res) => {
+  const { day, hours } = req.body;
+  db.run(
+    'INSERT INTO days (day, hours) VALUES (?, ?)',
+    [day, hours],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.status(201).json({ id: this.lastID, day, hours });
+    }
+  );
+});
+
+// Route to update a specific day
+app.put('/days/:id', (req, res) => {
+  const { id } = req.params;
+  const { day, hours } = req.body;
+  db.run(
+    'UPDATE days SET day = ?, hours = ? WHERE id = ?',
+    [day, hours, id],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Day not found' });
+      }
+      res.json({ id, day, hours });
+    }
+  );
+});
+
+// Route to delete a specific day
+app.delete('/days/:id', (req, res) => {
+  const { id } = req.params;
+  db.run('DELETE FROM days WHERE id = ?', id, function(err) {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Day not found' });
+    }
+    res.json({ message: 'Day deleted successfully' });
+  });
+});
+
+
+
 
 // Start the server
 const PORT = process.env.PORT || 7000;
